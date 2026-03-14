@@ -1,0 +1,53 @@
+services:
+  # ---------- Sensor nodes ----------
+  node-bedroom:
+    build: ./node
+    container_name: node-bedroom
+    environment:
+      ROOM_NAME: Bedroom
+      INIT_TEMP: "21.5"
+      INIT_HUMIDITY: "48"
+      DRIFT: "true"
+    ports:
+      - "8081:80"
+
+  node-kitchen:
+    build: ./node
+    container_name: node-kitchen
+    environment:
+      ROOM_NAME: Kitchen
+      INIT_TEMP: "20.2"
+      INIT_HUMIDITY: "55"
+      DRIFT: "true"
+    ports:
+      - "8082:80"
+
+  node-living:
+    build: ./node
+    container_name: node-living
+    environment:
+      ROOM_NAME: Living Room
+      INIT_TEMP: "19.5"
+      INIT_HUMIDITY: "50"
+      DRIFT: "true"
+    ports:
+      - "8083:80"
+
+  # ---------- Controller ----------
+  controller:
+    build: ./controller
+    container_name: controller
+    depends_on:
+      - node-bedroom
+      - node-kitchen
+      - node-living
+    environment:
+      NODE1_URL: "http://node-bedroom:80"
+      NODE2_URL: "http://node-kitchen:80"
+      NODE3_URL: "http://node-living:80"
+      TEMP_THRESHOLD: "20.0"
+      HYSTERESIS: "0.5"
+      POLL_INTERVAL: "10"
+      ADMIN_PHONE: "+1234567890"
+    ports:
+      - "8080:80"

@@ -1,0 +1,289 @@
+<mxGraphModel dx="1422" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1700" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <!-- Title -->
+    <mxCell id="title" value="Smart Dacha - Activity Diagram" style="text;fontSize=22;fontStyle=1;align=center;verticalAlign=middle;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="100" y="10" width="700" height="40" as="geometry"/>
+    </mxCell>
+
+    <!-- ==================== CONTROLLER SWIMLANE ==================== -->
+    <mxCell id="ctrl" value="ESP32 Controller" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;rounded=1;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="20" y="60" width="520" height="1560" as="geometry"/>
+    </mxCell>
+
+    <!-- Start -->
+    <mxCell id="cs" value="" style="ellipse;fillColor=#000000;strokeColor=#333333;" vertex="1" parent="ctrl">
+      <mxGeometry x="235" y="50" width="40" height="40" as="geometry"/>
+    </mxCell>
+
+    <!-- Connect WiFi -->
+    <mxCell id="c1" value="Connect to WiFi&#10;(Static IP)" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="ctrl">
+      <mxGeometry x="155" y="120" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="ec01" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="cs" target="c1" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Init GSM -->
+    <mxCell id="c2" value="Init GSM Module&#10;(SIM800L on UART2)" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="ctrl">
+      <mxGeometry x="155" y="200" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="ec12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="c1" target="c2" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Init Relay -->
+    <mxCell id="c3" value="Init Relay&#10;(Heater OFF, GPIO 26)" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="ctrl">
+      <mxGeometry x="155" y="280" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="ec23" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="c2" target="c3" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Start HTTP Server -->
+    <mxCell id="c4" value="Start HTTP Server&#10;(Dashboard on port 80)" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="ctrl">
+      <mxGeometry x="155" y="360" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="ec34" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="c3" target="c4" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Poll All Nodes -->
+    <mxCell id="c5" value="Poll All 3 Sensor Nodes&#10;HTTP GET /data" style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="ctrl">
+      <mxGeometry x="155" y="450" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="ec45" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="c4" target="c5" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Decision: Below threshold? -->
+    <mxCell id="d1" value="Any room&#10;below&#10;threshold?" style="rhombus;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="ctrl">
+      <mxGeometry x="160" y="550" width="190" height="120" as="geometry"/>
+    </mxCell>
+    <mxCell id="ec5d" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="c5" target="d1" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- YES: Heater ON + Alert -->
+    <mxCell id="chon" value="Turn Heater ON&#10;Send Alert SMS" style="rounded=1;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="ctrl">
+      <mxGeometry x="10" y="730" width="170" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="ed1y" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;fontStyle=1;fontSize=11;" edge="1" source="d1" target="chon" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- NO: Check hysteresis -->
+    <mxCell id="d2" value="All rooms&#10;above threshold&#10;+ hysteresis?" style="rhombus;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="ctrl">
+      <mxGeometry x="310" y="710" width="190" height="120" as="geometry"/>
+    </mxCell>
+    <mxCell id="ed1n" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;entryX=0.5;entryY=0;fontStyle=1;fontSize=11;" edge="1" source="d1" target="d2" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- YES (d2): Heater OFF + Recovery -->
+    <mxCell id="choff" value="Turn Heater OFF&#10;Send Recovery SMS" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="ctrl">
+      <mxGeometry x="320" y="880" width="170" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="ed2y" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;fontStyle=1;fontSize=11;" edge="1" source="d2" target="choff" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Merge bar 1 -->
+    <mxCell id="m1" value="" style="fillColor=#000000;strokeColor=#000000;" vertex="1" parent="ctrl">
+      <mxGeometry x="80" y="1000" width="350" height="6" as="geometry"/>
+    </mxCell>
+
+    <!-- Edges to merge bar 1 -->
+    <mxCell id="ehon_m" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="chon" target="m1" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ehoff_m" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="choff" target="m1" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ed2n" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0;exitY=1;fontStyle=1;fontSize=11;" edge="1" source="d2" target="m1" parent="ctrl">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="255" y="830"/>
+          <mxPoint x="255" y="1003"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Decision: SMS received? -->
+    <mxCell id="d3" value="SMS&#10;received?" style="rhombus;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="ctrl">
+      <mxGeometry x="165" y="1050" width="180" height="110" as="geometry"/>
+    </mxCell>
+    <mxCell id="em1d3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="m1" target="d3" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- YES (d3): Process SMS -->
+    <mxCell id="csms" value="Process SMS Command&#10;Send Reply SMS" style="rounded=1;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="ctrl">
+      <mxGeometry x="10" y="1210" width="190" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="ed3y" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;fontStyle=1;fontSize=11;" edge="1" source="d3" target="csms" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Merge bar 2 -->
+    <mxCell id="m2" value="" style="fillColor=#000000;strokeColor=#000000;" vertex="1" parent="ctrl">
+      <mxGeometry x="80" y="1320" width="350" height="6" as="geometry"/>
+    </mxCell>
+    <mxCell id="esms_m" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="csms" target="m2" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ed3n" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;fontStyle=1;fontSize=11;" edge="1" source="d3" target="m2" parent="ctrl">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="430" y="1105"/>
+          <mxPoint x="430" y="1323"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Handle Web Requests -->
+    <mxCell id="cweb" value="Handle Dashboard&#10;Web Requests" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="ctrl">
+      <mxGeometry x="155" y="1370" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="em2w" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="m2" target="cweb" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Wait 10s -->
+    <mxCell id="cwait" value="Wait 10 seconds" style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="ctrl">
+      <mxGeometry x="155" y="1470" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="eww" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="cweb" target="cwait" parent="ctrl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Loop back arrow -->
+    <mxCell id="eloop" value="loop" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;dashed=1;fontStyle=2;fontSize=11;fontColor=#999999;" edge="1" source="cwait" target="c5" parent="ctrl">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="50" y="1495"/>
+          <mxPoint x="50" y="480"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ==================== SENSOR NODE SWIMLANE ==================== -->
+    <mxCell id="node" value="Sensor Node x3 (ESP8266 D1 Mini)" style="swimlane;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;rounded=1;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="620" y="60" width="320" height="700" as="geometry"/>
+    </mxCell>
+
+    <!-- Node Start -->
+    <mxCell id="ns" value="" style="ellipse;fillColor=#000000;strokeColor=#333333;" vertex="1" parent="node">
+      <mxGeometry x="140" y="50" width="40" height="40" as="geometry"/>
+    </mxCell>
+
+    <!-- Node WiFi -->
+    <mxCell id="n1" value="Connect to WiFi&#10;(Static IP)" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="node">
+      <mxGeometry x="60" y="120" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="en01" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="ns" target="n1" parent="node">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Node DHT22 -->
+    <mxCell id="n2" value="Init DHT22 Sensor" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="node">
+      <mxGeometry x="60" y="200" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="en12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="n1" target="n2" parent="node">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Node Server -->
+    <mxCell id="n3" value="Start HTTP Server&#10;(port 80)" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="node">
+      <mxGeometry x="60" y="280" width="200" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="en23" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="n2" target="n3" parent="node">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Node Wait -->
+    <mxCell id="n4" value="Wait for&#10;HTTP Request" style="rounded=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="node">
+      <mxGeometry x="60" y="380" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="en34" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="n3" target="n4" parent="node">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Node Read -->
+    <mxCell id="n5" value="Read DHT22&#10;Temperature + Humidity" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="node">
+      <mxGeometry x="60" y="480" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="en45" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="n4" target="n5" parent="node">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Node Return JSON -->
+    <mxCell id="n6" value="Return JSON Response&#10;{room, temp, humidity}" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="node">
+      <mxGeometry x="60" y="580" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="en56" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="n5" target="n6" parent="node">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Node Loop back -->
+    <mxCell id="enloop" value="loop" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;entryX=1;entryY=0.5;dashed=1;fontStyle=2;fontSize=11;fontColor=#999999;" edge="1" source="n6" target="n4" parent="node">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="280" y="610"/>
+          <mxPoint x="280" y="410"/>
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ==================== INTERACTION NOTE ==================== -->
+    <mxCell id="note1" value="Controller polls each node&#10;via HTTP every 10 seconds&#10;&#10;GET /data&#10;Response: {room, temp, humidity}" style="shape=note;whiteSpace=wrap;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=center;" vertex="1" parent="1">
+      <mxGeometry x="570" y="820" width="220" height="100" as="geometry"/>
+    </mxCell>
+
+    <!-- Dashed arrows between swimlanes -->
+    <mxCell id="einter1" value="" style="dashed=1;endArrow=classic;strokeColor=#d6b656;" edge="1" source="c5" target="note1" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="einter2" value="" style="dashed=1;endArrow=classic;strokeColor=#82b366;" edge="1" source="note1" target="n4" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Legend -->
+    <mxCell id="leg_title" value="Color Legend:" style="text;fontSize=11;fontStyle=1;align=left;verticalAlign=top;fontColor=#666;" vertex="1" parent="1">
+      <mxGeometry x="620" y="950" width="200" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg1" value="" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+      <mxGeometry x="620" y="980" width="20" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg1t" value="Initialization" style="text;fontSize=10;align=left;fontColor=#666;" vertex="1" parent="1">
+      <mxGeometry x="648" y="977" width="100" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg2" value="" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+      <mxGeometry x="620" y="1002" width="20" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg2t" value="Polling / Timing" style="text;fontSize=10;align=left;fontColor=#666;" vertex="1" parent="1">
+      <mxGeometry x="648" y="999" width="100" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg3" value="" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+      <mxGeometry x="620" y="1024" width="20" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg3t" value="Threshold / Heater" style="text;fontSize=10;align=left;fontColor=#666;" vertex="1" parent="1">
+      <mxGeometry x="648" y="1021" width="120" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg4" value="" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+      <mxGeometry x="620" y="1046" width="20" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg4t" value="SMS" style="text;fontSize=10;align=left;fontColor=#666;" vertex="1" parent="1">
+      <mxGeometry x="648" y="1043" width="100" height="20" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg5" value="" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+      <mxGeometry x="620" y="1068" width="20" height="14" as="geometry"/>
+    </mxCell>
+    <mxCell id="leg5t" value="Web / Dashboard" style="text;fontSize=10;align=left;fontColor=#666;" vertex="1" parent="1">
+      <mxGeometry x="648" y="1065" width="100" height="20" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>
