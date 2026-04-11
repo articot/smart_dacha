@@ -5,23 +5,33 @@
 #include "config.h"
 
 DHT dht(DHT_PIN, DHT22);
-ESP8266WebServer server(80);
+ESP8266WebServer server(8080);
 
 // -------------------------------------------------------
 // GET /data  →  {"room":"Bedroom","temp":21.5,"humidity":48.2}
 // -------------------------------------------------------
-void handleData() {
-    float temp     = dht.readTemperature();
+void handleData()
+{
+    float temp = dht.readTemperature();
     float humidity = dht.readHumidity();
 
-    if (isnan(temp) || isnan(humidity)) {
-        server.send(500, "application/json", "{\"error\":\"sensor read failed\"}");
+    if (isnan(temp))
+    {
+        server.send(500, "application/json", "{\"error\":\" temp sensor read failed\"}");
         return;
     }
 
-    String json = "{\"room\":\""  + String(ROOM_NAME)        + "\","
-                   "\"temp\":"    + String(temp,     1)       + ","
-                   "\"humidity\":" + String(humidity, 1)      + "}";
+    if (isnan(humidity))
+    {
+        server.send(500, "application/json", "{\"error\":\"humidity sensor read failed\"}");
+        return;
+    }
+
+    String json = "{\"room\":\"" + String(ROOM_NAME) + "\","
+                                                       "\"temp\":" +
+                  String(temp, 1) + ","
+                                    "\"humidity\":" +
+                  String(humidity, 1) + "}";
 
     server.send(200, "application/json", json);
 }
@@ -29,14 +39,16 @@ void handleData() {
 // -------------------------------------------------------
 // GET /ping  →  simple health-check
 // -------------------------------------------------------
-void handlePing() {
+void handlePing()
+{
     server.send(200, "text/plain", "OK");
 }
 
 // -------------------------------------------------------
 // Setup & loop
 // -------------------------------------------------------
-void setup() {
+void setup()
+{
     Serial.begin(115200);
     dht.begin();
 
@@ -45,7 +57,8 @@ void setup() {
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
     Serial.print("Connecting to WiFi");
-    while (WiFi.status() != WL_CONNECTED) {
+    while (WiFi.status() != WL_CONNECTED)
+    {
         delay(500);
         Serial.print(".");
     }
@@ -56,6 +69,12 @@ void setup() {
     server.begin();
 }
 
-void loop() {
+void loop()
+{
+    if (WiFi.status() != WL_CONNECTED)
+    {
+        Serial.println("WiFi lost!");
+        ESP.restart();
+    }
     server.handleClient();
 }
