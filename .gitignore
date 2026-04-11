@@ -49,5 +49,8 @@ docker-compose.override.yml
 # Test caches
 .pytest_cache/
 
+# Installer scripts
+get-platformio.py
+
 # Windows ADS artifacts
 *:Zone.Identifier
