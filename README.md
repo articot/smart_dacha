@@ -204,3 +204,8 @@ Alerts fire only on **state transitions** — not repeatedly every poll cycle.
 - `adafruit/DHT sensor library @ ^1`
 - `adafruit/Adafruit Unified Sensor @ ^1`
 - `ESP8266WebServer`, `ESP8266WiFi` — bundled with the ESP8266 Arduino core
+
+
+## References
+[Activity Diagram](./smart-dacha-activity.drawio)
+[Sequence Diagram](./smart-dacha-sequence.drawio)
