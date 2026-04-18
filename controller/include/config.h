@@ -4,22 +4,22 @@
 // -------------------------------------------------------
 // WiFi credentials
 // -------------------------------------------------------
-#define WIFI_SSID     "YourSSID"
-#define WIFI_PASSWORD "YourPassword"
+#define WIFI_SSID     "TP-Link_38CA"
+#define WIFI_PASSWORD "07061257"
 
 // -------------------------------------------------------
 // Controller static IP
 // -------------------------------------------------------
-const IPAddress STATIC_IP(192, 168, 1, 100);
-const IPAddress GATEWAY  (192, 168, 1,   1);
+const IPAddress STATIC_IP(192, 168, 0, 100);
+const IPAddress GATEWAY  (192, 168, 0,   1);
 const IPAddress SUBNET   (255, 255, 255, 0);
 
 // -------------------------------------------------------
 // Sensor node IPs  (must match each node's config.h)
 // -------------------------------------------------------
-#define NODE1_IP  "192.168.1.101"   // Bedroom
-#define NODE2_IP  "192.168.1.102"   // Kitchen
-#define NODE3_IP  "192.168.1.103"   // Living Room
+#define NODE1_IP  "192.168.0.101"   // Bedroom
+#define NODE2_IP  "192.168.0.102"   // Kitchen
+#define NODE3_IP  "192.168.0.103"   // Living Room
 #define NUM_ROOMS 3
 
 // -------------------------------------------------------
@@ -48,4 +48,4 @@ const IPAddress SUBNET   (255, 255, 255, 0);
 #define GSM_BAUD      9600
 
 // Only this number may send commands and will receive all alerts
-#define ADMIN_PHONE   "+1234567890"
+#define ADMIN_PHONE   "+79043301556"

@@ -5,17 +5,24 @@
 #include "config.h"
 
 DHT dht(DHT_PIN, DHT22);
-ESP8266WebServer server(8080);
+ESP8266WebServer server(80);
 
 // -------------------------------------------------------
 // GET /data  →  {"room":"Bedroom","temp":21.5,"humidity":48.2}
 // -------------------------------------------------------
 void handleData()
 {
-    float temp = dht.readTemperature();
+    Serial.println("[data] Requesting sensor data...");
+
+    // float temp = 22;
+    // float humidity = 48;
+
+    float temperature = dht.readTemperature();
     float humidity = dht.readHumidity();
 
-    if (isnan(temp))
+    Serial.println("[data] Sensor data: temp=" + String(temperature) + "°C, humidity=" + String(humidity) + "%");
+
+    if (isnan(temperature))
     {
         server.send(500, "application/json", "{\"error\":\" temp sensor read failed\"}");
         return;
@@ -29,7 +36,7 @@ void handleData()
 
     String json = "{\"room\":\"" + String(ROOM_NAME) + "\","
                                                        "\"temp\":" +
-                  String(temp, 1) + ","
+                  String(temperature, 1) + ","
                                     "\"humidity\":" +
                   String(humidity, 1) + "}";
 
@@ -50,7 +57,12 @@ void handlePing()
 void setup()
 {
     Serial.begin(115200);
+    Serial.println("Starting node [" + String(ROOM_NAME) + "]...");
+
     dht.begin();
+    delay(2000); // DHT22 needs time to stabilize
+
+    Serial.println("DHT started...");
 
     WiFi.mode(WIFI_STA);
     WiFi.config(STATIC_IP, GATEWAY, SUBNET);
@@ -64,6 +76,7 @@ void setup()
     }
     Serial.println("\nNode [" + String(ROOM_NAME) + "] online at http://" + WiFi.localIP().toString());
 
+    server.on("/", HTTP_GET, handleData);
     server.on("/data", HTTP_GET, handleData);
     server.on("/ping", HTTP_GET, handlePing);
     server.begin();

@@ -25,7 +25,7 @@ RELAY_PIN      = 26  # informational only
 # ---------------------------------------------------------------------------
 # State
 # ---------------------------------------------------------------------------
-rooms = [{"name": n["name"], "url": n["url"], "temp": 0.0, "humidity": 0.0, "online": False}
+rooms = [{"name": n["name"], "url": n["url"], "temp": 0.0, "humidity": 0.0, "online": False, "error": ""}
          for n in NODES]
 
 heater_mode  = "auto"      # "auto" | "force_on" | "force_off"
@@ -53,14 +53,16 @@ def poll_nodes():
     global prev_below
     for room in rooms:
         try:
-            r = http_client.get(f"{room['url']}/data", timeout=3)
+    r = http_client.get(f"{room['url']}/data", timeout=3)
             r.raise_for_status()
             data = r.json()
             room["temp"]     = data.get("temp", 0.0)
             room["humidity"] = data.get("humidity", 0.0)
             room["online"]   = True
-        except Exception:
+            room["error"]    = ""
+        except Exception as e:
             room["online"] = False
+            room["error"]  = str(e)
 
 
 def apply_heater_logic():
@@ -162,15 +164,17 @@ def build_dashboard():
     is_auto = heater_mode == "auto"
 
     cards = ""
-    for r in rooms:
+    for i, r in enumerate(rooms):
         cls = "card offline" if not r["online"] else "card"
+        err_html = f"<div class='err' id='err-{i}'>{r.get('error','')}</div>"
         if r["online"]:
-            cards += (f"<div class='{cls}'><div class='room'>{r['name']}</div>"
-                      f"<div class='temp'>{r['temp']:.1f}&deg;</div>"
-                      f"<div class='hum'>{r['humidity']:.1f}% RH</div></div>")
+            cards += (f"<div class='{cls}' id='card-{i}'><div class='room'>{r['name']}</div>"
+                      f"<div class='temp' id='temp-{i}'>{r['temp']:.1f}&deg;</div>"
+                      f"<div class='hum' id='hum-{i}'>{r['humidity']:.1f}% RH</div>{err_html}</div>")
         else:
-            cards += (f"<div class='{cls}'><div class='room'>{r['name']}</div>"
-                      f"<div class='temp'>--</div><div class='hum'>offline</div></div>")
+            cards += (f"<div class='{cls}' id='card-{i}'><div class='room'>{r['name']}</div>"
+                      f"<div class='temp' id='temp-{i}'>--</div>"
+                      f"<div class='hum' id='hum-{i}'>offline</div>{err_html}</div>")
 
     auto_chk = " checked" if is_auto else ""
     manual_chk = "" if is_auto else " checked"
@@ -180,7 +184,6 @@ def build_dashboard():
 <head>
   <meta charset='UTF-8'>
   <meta name='viewport' content='width=device-width,initial-scale=1'>
-  <meta http-equiv='refresh' content='10'>
   <title>Smart Dacha</title>
   <style>
     body{{font-family:sans-serif;background:#1a1a2e;color:#eee;text-align:center;padding:20px;margin:0}}
@@ -205,17 +208,20 @@ def build_dashboard():
     .btn-on {{background:#2ecc71;color:#000}}
     .btn-off{{background:#e74c3c;color:#fff}}
     .thr{{font-size:.8em;color:#555580;margin-top:14px}}
+    .poll-status{{color:#6c6c8a;font-size:.75em;margin-top:6px;margin-bottom:28px;transition:color .3s}}
+    .poll-status.fresh{{color:#2ecc71}}
   </style>
 </head>
 <body>
 <h1>Smart Dacha</h1>
-<div class='subtitle'>EMULATOR &mdash; auto-refreshes every 10 s</div>
-<div class='grid'>{cards}</div>
+<div class='subtitle'>EMULATOR &mdash; updates every 10 s</div>
+<div class='poll-status' id='poll-status'>waiting for first update&hellip;</div>
+<div class='grid' id='rooms-grid'>{cards}</div>
 <div class='panel'><h2>Gas Heater</h2>
-<div class='state'>State: <span class='{"on" if relay_state else "off"}'>{"ON" if relay_state else "OFF"}</span></div>
+<div class='state'>State: <span id='heater-state' class='{"on" if relay_state else "off"}'>{"ON" if relay_state else "OFF"}</span></div>
 <div class='mode-switch'>
-  <label class='radio-lbl'><input type='radio' name='hmode' value='auto' onchange="switchMode(this.value)"{auto_chk}> Auto</label>
-  <label class='radio-lbl'><input type='radio' name='hmode' value='manual' onchange="switchMode(this.value)"{manual_chk}> Manual</label>
+  <label class='radio-lbl'><input type='radio' name='hmode' id='mode-auto' value='auto' onchange="switchMode(this.value)"{auto_chk}> Auto</label>
+  <label class='radio-lbl'><input type='radio' name='hmode' id='mode-manual' value='manual' onchange="switchMode(this.value)"{manual_chk}> Manual</label>
 </div>
 <div id='mbts' class='btns' style='display:{btns_display}'>
   <form action='/heater/on' method='get'><button class='btn btn-on'>Turn ON</button></form>
@@ -228,6 +234,48 @@ function switchMode(v){{
   if(v==='auto'){{document.getElementById('mbts').style.display='none';window.location='/heater/auto';}}
   else{{document.getElementById('mbts').style.display='flex';}}
 }}
+function applyData(d){{
+  var hs=document.getElementById('heater-state');
+  hs.textContent=d.heater?'ON':'OFF';
+  hs.className=d.heater?'on':'off';
+  var isAuto=d.mode==='auto';
+  document.getElementById('mode-auto').checked=isAuto;
+  document.getElementById('mode-manual').checked=!isAuto;
+  document.getElementById('mbts').style.display=isAuto?'none':'flex';
+  d.rooms.forEach(function(r,i){{
+    var card=document.getElementById('card-'+i);
+    var tempEl=document.getElementById('temp-'+i);
+    var humEl=document.getElementById('hum-'+i);
+    var errEl=document.getElementById('err-'+i);
+    if(r.online){{
+      card.className='card';
+      tempEl.innerHTML=r.temp.toFixed(1)+'&deg;';
+      humEl.textContent=r.humidity.toFixed(1)+'% RH';
+      errEl.textContent='';
+    }} else {{
+      card.className='card offline';
+      tempEl.textContent='--';
+      humEl.textContent='offline';
+      errEl.textContent=r.error||'';
+    }}
+  }});
+}}
+function updatePollStatus(ok){{
+  var el=document.getElementById('poll-status');
+  if(ok){{
+    var d=new Date();
+    var ts=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');
+    el.textContent='last updated '+ts;
+    el.className='poll-status fresh';
+    setTimeout(function(){{el.className='poll-status';}},1500);
+  }} else {{
+    el.textContent='update failed \u2014 retrying\u2026';
+  }}
+}}
+function poll(){{
+  fetch('/data').then(function(r){{return r.json();}}).then(function(d){{applyData(d);updatePollStatus(true);}}).catch(function(){{updatePollStatus(false);}}).finally(function(){{setTimeout(poll,10000);}});
+}}
+setTimeout(poll,10000);
 window.onload=function(){{
   var sel=document.querySelector('input[name=hmode]:checked');
   if(sel && sel.value==='manual') document.getElementById('mbts').style.display='flex';
@@ -271,14 +319,15 @@ def heater_auto():
     return redirect("/")
 
 
-@app.route("/api/status")
-def api_status():
+@app.route("/data")
+def data_endpoint():
     with lock:
         data = {
             "heater": relay_state,
             "mode":   heater_mode,
             "rooms":  [{"name": r["name"], "temp": r["temp"],
-                        "humidity": r["humidity"], "online": r["online"]}
+                        "humidity": r["humidity"], "online": r["online"],
+                        "error": r["error"]}
                        for r in rooms],
         }
     return jsonify(data)

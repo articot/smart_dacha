@@ -202,7 +202,88 @@ A communication node built with `ESP32 + 4G LTE modem` featuring separate power 
 
 This ensures reliable modem startup, control and recovery, suitable for autonomous telemetry systems.
 
-## 11. Mermaid diagram
+## 11. Controller software
+
+The ESP32 runs a web server and implements multi-room temperature monitoring with gas heater control.
+
+### 11.1 Overview
+
+On boot the controller connects to WiFi with a static IP (`192.168.0.100`), starts an HTTP server on port 80, and enters its main loop:
+
+1. **Poll sensor nodes** every 10 seconds — sends `GET /data` to each of the 3 Wemos D1 Mini nodes (Bedroom `.101`, Kitchen `.102`, Living Room `.103`) and stores their temperature/humidity readings.
+2. **Apply heater logic** after each poll cycle (see §11.3).
+3. **Serve the web dashboard** and JSON data endpoint to any browser/client on the local network.
+4. **Process incoming SMS** from the GSM module (SIM800L on UART2) in a non-blocking fashion between polls.
+
+### 11.2 HTTP endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | HTML dashboard with room cards, heater panel, and client-side JS that polls `/data` every 10 s |
+| `GET` | `/data` | JSON status of the entire system (see schema below) |
+| `GET` | `/heater/on` | Force heater ON, redirects to `/` |
+| `GET` | `/heater/off` | Force heater OFF, redirects to `/` |
+| `GET` | `/heater/auto` | Set heater to AUTO mode, redirects to `/` |
+
+#### `GET /data` response schema
+
+```json
+{
+  "heater": true,
+  "mode": "auto",
+  "rooms": [
+    { "name": "Bedroom",     "temp": 21.5, "humidity": 48.0, "online": true,  "error": "" },
+    { "name": "Kitchen",     "temp": 20.2, "humidity": 55.0, "online": true,  "error": "" },
+    { "name": "Living Room", "temp": 0.0,  "humidity": 0.0,  "online": false, "error": "HTTP -1" }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `heater` | boolean | Current relay state (`true` = ON) |
+| `mode` | string | `"auto"`, `"force_on"`, or `"force_off"` |
+| `rooms[].name` | string | Room name |
+| `rooms[].temp` | float | Last known temperature in °C |
+| `rooms[].humidity` | float | Last known relative humidity in % |
+| `rooms[].online` | boolean | Whether the node responded to the last poll |
+| `rooms[].error` | string | Error description when offline, empty string when online |
+
+### 11.3 Heater logic
+
+The heater has three modes:
+
+- **AUTO** — relay turns ON when **any** online room drops below `TEMP_THRESHOLD` (default 20.0 °C) and turns OFF only when **all** online rooms exceed `TEMP_THRESHOLD + HYSTERESIS` (default 20.5 °C). This prevents rapid toggling near the threshold.
+- **FORCE_ON** — relay is always ON regardless of temperatures.
+- **FORCE_OFF** — relay is always OFF regardless of temperatures.
+
+SMS alerts are sent to the admin phone **only on state transitions**:
+- `ALERT` when temperature first drops below the threshold (heater turns ON).
+- `INFO` when all rooms recover above threshold + hysteresis (heater turns OFF).
+
+### 11.4 SMS commands
+
+The controller accepts SMS commands **only from `ADMIN_PHONE`** — other senders are silently ignored.
+
+| Command | Response |
+|---------|----------|
+| `STATUS` | Replies with current temp/humidity for all rooms and heater state |
+| `HEATER ON` | Forces heater ON, confirms via SMS |
+| `HEATER OFF` | Forces heater OFF, confirms via SMS |
+| `HEATER AUTO` | Returns heater to auto mode, confirms via SMS |
+
+### 11.5 Dashboard
+
+The web dashboard at `/` displays:
+
+- **Room cards** — temperature, humidity, online/offline status, and error details for each room.
+- **Heater panel** — current relay state (ON/OFF), mode selector (Auto/Manual), and manual ON/OFF buttons.
+- **Auto threshold info** — shows the configured threshold and hysteresis values.
+- **Polling indicator** — "last updated HH:MM:SS" timestamp that updates on each successful fetch, with a brief green flash. Shows "update failed — retrying…" on network errors.
+
+The dashboard uses client-side JavaScript to fetch `/data` every 10 seconds and update the DOM without full page reloads.
+
+## 12. Mermaid diagram
 
 ```mermaid
 flowchart TB

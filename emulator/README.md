@@ -129,10 +129,10 @@ Features:
 - Manual Turn ON / Turn OFF buttons
 - Auto-refreshes every 10 seconds
 
-#### `GET /api/status` — JSON status of entire system
+#### `GET /data` — JSON status of entire system
 
 ```powershell
-Invoke-RestMethod http://localhost:8080/api/status | ConvertTo-Json -Depth 3
+Invoke-RestMethod http://localhost:8080/data | ConvertTo-Json -Depth 3
 ```
 
 Response:
@@ -142,9 +142,9 @@ Response:
   "heater": true,
   "mode": "auto",
   "rooms": [
-    { "name": "Bedroom",     "temp": 21.5, "humidity": 48.0, "online": true },
-    { "name": "Kitchen",     "temp": 20.2, "humidity": 55.0, "online": true },
-    { "name": "Living Room", "temp": 19.5, "humidity": 50.0, "online": true }
+    { "name": "Bedroom",     "temp": 21.5, "humidity": 48.0, "online": true,  "error": "" },
+    { "name": "Kitchen",     "temp": 20.2, "humidity": 55.0, "online": true,  "error": "" },
+    { "name": "Living Room", "temp": 19.5, "humidity": 50.0, "online": false, "error": "Connection refused" }
   ]
 }
 ```

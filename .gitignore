@@ -54,3 +54,6 @@ get-platformio.py
 
 # Windows ADS artifacts
 *:Zone.Identifier
+
+# configs
+config.**.h
